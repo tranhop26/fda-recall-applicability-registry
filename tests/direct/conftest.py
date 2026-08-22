@@ -13,6 +13,7 @@ for module_name in tuple(sys.modules):
 
 CONTRACT = "contracts/fda_recall_applicability_registry.py"
 SDK_VERSION = "v0.2.16"
+FDA_URL_PATTERN = r"https://api[.]fda[.]gov/food/enforcement[.]json[?]search=recall_number:%22F-1000-2026%22&limit=2"
 
 
 @pytest.fixture
@@ -47,3 +48,60 @@ def canonical_subject(subject_data):
 @pytest.fixture
 def pretty_subject(subject_data):
     return json.dumps(subject_data, indent=2)
+
+
+@pytest.fixture
+def fda_payload():
+    return {
+        "meta": {
+            "disclaimer": "openFDA public data",
+            "last_updated": "2026-08-18",
+            "license": "https://open.fda.gov/license/",
+            "results": {"limit": 2, "skip": 0, "total": 1},
+            "terms": "https://open.fda.gov/terms/",
+        },
+        "results": [
+            {
+                "classification": "Class I",
+                "code_info": "LOT-42, best by 2026-09-01",
+                "distribution_pattern": "United States nationwide",
+                "product_description": "Acme Foods Roasted Almonds, SKU-7",
+                "recall_initiation_date": "20260810",
+                "recall_number": "F-1000-2026",
+                "recalling_firm": "Acme Foods",
+                "report_date": "20260818",
+                "status": "Ongoing",
+                "termination_date": "",
+            }
+        ],
+    }
+
+
+def mock_fda_payload(direct_vm, payload, status=200):
+    direct_vm.mock_web(FDA_URL_PATTERN, {"status": status, "body": json.dumps(payload)})
+
+
+def semantic_result(
+    manufacturer="MATCH",
+    product_identity="MATCH",
+    lot_or_code="MATCH",
+    territory="MATCH",
+    relevant_date="MATCH",
+    reason="bounded evidence supports the classifications",
+):
+    return json.dumps(
+        {
+            "lot_or_code": lot_or_code,
+            "manufacturer": manufacturer,
+            "product_identity": product_identity,
+            "reason": reason,
+            "relevant_date": relevant_date,
+            "territory": territory,
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+
+
+def mock_semantic_result(direct_vm, result):
+    direct_vm.mock_llm(r"FDA recall applicability evaluator", result)
