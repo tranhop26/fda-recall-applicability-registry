@@ -2,59 +2,54 @@
   "commands": [
     {
       "command": "python -m pip check",
-      "completed_at": "2026-08-22T04:00:23.6648665Z",
+      "completed_at": "2026-08-22T04:14:01.3143060Z",
       "exit_code": 0,
       "result": "No broken requirements found"
     },
     {
       "command": "genvm-lint check contracts/fda_recall_applicability_registry.py",
-      "completed_at": "2026-08-22T04:00:23.6648665Z",
+      "completed_at": "2026-08-22T04:14:01.3143060Z",
       "exit_code": 0,
       "result": "Lint passed; validation passed; 7 methods (4 view, 3 write)"
     },
     {
       "command": "python -m ruff format --check .",
-      "completed_at": "2026-08-22T04:00:23.6648665Z",
+      "completed_at": "2026-08-22T04:14:01.3143060Z",
       "exit_code": 0,
       "result": "8 files already formatted"
     },
     {
       "command": "python -m ruff check .",
-      "completed_at": "2026-08-22T04:00:23.6648665Z",
+      "completed_at": "2026-08-22T04:14:01.3143060Z",
       "exit_code": 0,
       "result": "All checks passed"
     },
     {
       "command": "PYTHONUTF8=1 python3 -m pytest -m 'not integration and not studionet' -q (WSL)",
-      "completed_at": "2026-08-22T04:00:23.6648665Z",
+      "completed_at": "2026-08-22T04:14:01.3143060Z",
       "exit_code": 0,
-      "result": "66 passed, 1 deselected"
+      "result": "76 passed, 1 deselected"
     },
     {
       "command": "python -m pytest tests/integration --collect-only -q",
-      "completed_at": "2026-08-22T04:00:23.6648665Z",
+      "completed_at": "2026-08-22T04:14:01.3143060Z",
       "exit_code": 0,
       "result": "1 test collected"
     },
     {
       "command": "git diff --check",
-      "completed_at": "2026-08-22T04:00:23.6648665Z",
+      "completed_at": "2026-08-22T04:14:01.3143060Z",
       "exit_code": 0,
       "result": "No whitespace errors"
-    },
-    {
-      "command": "python -c 'validate verification/test-summary.json against test-summary.schema.json'",
-      "completed_at": "2026-08-22T04:00:23.6648665Z",
-      "exit_code": 0,
-      "result": "test-summary schema valid"
     }
   ],
-  "contract_source_sha256": "87cb121aca97ef0278c64382700b7142c984326d2e51176fb1ccb296e8d314b6",
-  "generated_at": "2026-08-22T04:00:23.6648665Z",
-  "tested_commit": "34e824a0ffa2427acb43e2bbe61df165010f373f",
+  "contract_source_sha256": "49e58dc644bbebabe22f4995da466309bedb32e4c34788b33d1de5a908e21cfe",
+  "generated_at": "2026-08-22T04:14:01.3143060Z",
+  "tested_commit": "8615c17ad0c7a04be17fdebb70b95a2258820e53",
   "tool_versions": {
     "genlayer_cli": "0.39.2",
     "genvm_lint": "0.11.0",
+    "jsonschema": "4.25.1",
     "pytest": "9.1.1",
     "python": "3.12.13",
     "ruff": "0.12.5"
