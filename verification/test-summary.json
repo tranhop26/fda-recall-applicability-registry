@@ -44,6 +44,7 @@
     }
   ],
   "contract_source_sha256": "49e58dc644bbebabe22f4995da466309bedb32e4c34788b33d1de5a908e21cfe",
+  "evidence_commit": "39a490ffdbac12a4788658807294e374931d7973",
   "generated_at": "2026-08-22T04:14:01.3143060Z",
   "tested_commit": "8615c17ad0c7a04be17fdebb70b95a2258820e53",
   "tool_versions": {
