@@ -38,6 +38,16 @@ def test_complete_semantic_match_is_affected(direct_vm, direct_deploy, canonical
     assert contract.read_effective_status("case-1")[0:2] == ("AFFECTED", "CURRENT")
 
 
+def test_source_date_at_ten_calendar_day_boundary_is_fresh(direct_vm, direct_deploy, canonical_subject, fda_payload):
+    contract = open_pending(direct_vm, direct_deploy, canonical_subject)
+    direct_vm.warp("2026-08-22T23:59:59+00:00")
+    fda_payload["meta"]["last_updated"] = "2026-08-12"
+
+    resolve_with(direct_vm, contract, fda_payload, semantic_result())
+
+    assert contract.read_assessment("case-1")[0] == "AFFECTED"
+
+
 def test_explicit_dimension_conflict_is_not_affected(direct_vm, direct_deploy, canonical_subject, fda_payload):
     contract = open_pending(direct_vm, direct_deploy, canonical_subject)
 

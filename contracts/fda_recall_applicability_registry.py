@@ -163,8 +163,8 @@ def _stable_fda_record(payload, recall_number: str, assessed_at: int) -> tuple[d
     if not isinstance(source_last_updated, str) or len(source_last_updated) != 10:
         raise ValueError("invalid source date")
     source_timestamp = int(datetime.strptime(source_last_updated, "%Y-%m-%d").replace(tzinfo=timezone.utc).timestamp())
-    source_age = assessed_at - source_timestamp
-    if source_age < 0 or source_age > SOURCE_MAX_AGE_SECONDS:
+    source_age_days = assessed_at // 86400 - source_timestamp // 86400
+    if source_age_days < 0 or source_age_days > SOURCE_MAX_AGE_SECONDS // 86400:
         raise ValueError("source is not fresh")
     result = results[0]
     if not isinstance(result, dict) or result.get("recall_number") != recall_number:
