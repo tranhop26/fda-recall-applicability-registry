@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Verified GenLayer Studionet deployment",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "network",
+    "chain_id",
+    "rpc_url",
+    "deployer",
+    "contract_address",
+    "case_id",
+    "recall_number",
+    "source_sha256",
+    "deployed_source_sha256",
+    "transactions",
+    "receipts",
+    "readback",
+    "explorer",
+    "tools",
+    "generated_at"
+  ],
+  "properties": {
+    "network": {"const": "studionet"},
+    "chain_id": {"const": 61999},
+    "rpc_url": {"type": "string", "format": "uri"},
+    "deployer": {"type": "string", "pattern": "^0x[0-9a-fA-F]{40}$"},
+    "contract_address": {"type": "string", "pattern": "^0x[0-9a-fA-F]{40}$"},
+    "case_id": {"type": "string"},
+    "recall_number": {"type": "string"},
+    "source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "deployed_source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "transactions": {"type": "object"},
+    "receipts": {"type": "object"},
+    "readback": {"type": "object"},
+    "explorer": {"type": "object"},
+    "tools": {"type": "object"},
+    "generated_at": {"type": "string", "format": "date-time"}
+  }
+}
