@@ -184,9 +184,7 @@ def _forced_unavailable_mask(subject, stable_record) -> int:
         stable_record["recalling_firm"] == "" and stable_record["product_description"] == ""
     ):
         unavailable |= 1
-    if (subject["product_name"] == "" and subject["model_or_sku"] == "") or stable_record[
-        "product_description"
-    ] == "":
+    if (subject["product_name"] == "" and subject["model_or_sku"] == "") or stable_record["product_description"] == "":
         unavailable |= 2
     if (subject["lot_or_code"] == "" and subject["model_or_sku"] == "") or (
         stable_record["code_info"] == "" and stable_record["product_description"] == ""
