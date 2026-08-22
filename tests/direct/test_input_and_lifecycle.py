@@ -2,7 +2,13 @@ import hashlib
 import json
 
 import pytest
-from conftest import CONTRACT, SDK_VERSION
+from conftest import (
+    CONTRACT,
+    SDK_VERSION,
+    mock_fda_payload,
+    mock_semantic_result,
+    semantic_result,
+)
 
 
 def canonical(value):
@@ -174,3 +180,151 @@ def test_unknown_case_reads_are_rejected(direct_deploy, method_name):
 
     with pytest.raises(Exception, match="Unknown case"):
         getattr(contract, method_name)("missing")
+
+
+def resolve_affected(direct_vm, contract, fda_payload):
+    mock_fda_payload(direct_vm, fda_payload)
+    mock_semantic_result(direct_vm, semantic_result())
+    contract.resolve_case("case-1")
+
+
+def current_contract_address(direct_vm):
+    return "0x" + direct_vm._contract_address.hex()
+
+
+def test_effective_status_fails_closed_after_expiry_but_history_remains(
+    direct_vm, direct_deploy, canonical_subject, fda_payload
+):
+    contract = open_pending(direct_vm, direct_deploy, canonical_subject)
+    resolve_affected(direct_vm, contract, fda_payload)
+    historical = contract.read_assessment("case-1")
+    direct_vm.warp("2026-09-02T00:00:01+00:00")
+
+    assert contract.read_assessment("case-1") == historical
+    assert contract.read_effective_status("case-1") == ("UNRESOLVED", "STALE", historical[7])
+
+
+def test_decided_case_rejects_repeated_resolution_without_mutation(
+    direct_vm, direct_deploy, canonical_subject, fda_payload
+):
+    contract = open_pending(direct_vm, direct_deploy, canonical_subject)
+    resolve_affected(direct_vm, contract, fda_payload)
+    before = contract.read_assessment("case-1")
+
+    with pytest.raises(Exception, match="Case is terminal"):
+        contract.resolve_case("case-1")
+
+    assert contract.read_assessment("case-1") == before
+
+
+def test_resolve_at_deadline_is_rejected(direct_vm, direct_deploy, canonical_subject):
+    contract = open_pending(direct_vm, direct_deploy, canonical_subject)
+    direct_vm.warp("2026-08-24T00:00:00+00:00")
+
+    with pytest.raises(Exception, match="Resolution deadline passed"):
+        contract.resolve_case("case-1")
+
+    assert contract.read_case("case-1")[0] == "PENDING"
+
+
+def test_closed_case_rejects_resolution(direct_vm, direct_deploy, canonical_subject):
+    contract = open_pending(direct_vm, direct_deploy, canonical_subject)
+    direct_vm.warp("2026-08-24T00:00:00+00:00")
+    contract.close_unresolved("case-1")
+
+    with pytest.raises(Exception, match="Case is terminal"):
+        contract.resolve_case("case-1")
+
+
+def test_refresh_requires_both_predecessor_fields(direct_vm, direct_deploy, canonical_subject):
+    contract = open_pending(direct_vm, direct_deploy, canonical_subject)
+
+    with pytest.raises(Exception, match="Invalid predecessor"):
+        contract.open_case("case-2", "food", "F-1000-2026", canonical_subject, "", "case-1")
+    with pytest.raises(Exception, match="Invalid predecessor"):
+        contract.open_case("case-2", "food", "F-1000-2026", canonical_subject, current_contract_address(direct_vm), "")
+
+
+def test_refresh_requires_local_terminal_predecessor(direct_vm, direct_deploy, canonical_subject):
+    contract = open_pending(direct_vm, direct_deploy, canonical_subject)
+    address = current_contract_address(direct_vm)
+
+    with pytest.raises(Exception, match="Predecessor must be local"):
+        contract.open_case("case-2", "food", "F-1000-2026", canonical_subject, "0x" + "11" * 20, "case-1")
+    with pytest.raises(Exception, match="Predecessor is not terminal"):
+        contract.open_case("case-2", "food", "F-1000-2026", canonical_subject, address, "case-1")
+    with pytest.raises(Exception, match="Unknown predecessor"):
+        contract.open_case("case-2", "food", "F-1000-2026", canonical_subject, address, "missing")
+
+
+@pytest.mark.parametrize(
+    ("product_type", "recall_number", "subject_change"),
+    [
+        ("drug", "F-1000-2026", None),
+        ("food", "F-1001-2026", None),
+        ("food", "F-1000-2026", ("lot_or_code", "LOT-99")),
+    ],
+)
+def test_refresh_requires_same_source_and_subject(
+    direct_vm,
+    direct_deploy,
+    canonical_subject,
+    subject_data,
+    product_type,
+    recall_number,
+    subject_change,
+):
+    contract = open_pending(direct_vm, direct_deploy, canonical_subject)
+    direct_vm.warp("2026-08-24T00:00:00+00:00")
+    contract.close_unresolved("case-1")
+    if subject_change is not None:
+        subject_data[subject_change[0]] = subject_change[1]
+    refresh_subject = canonical(subject_data)
+
+    with pytest.raises(Exception, match="Predecessor identity mismatch"):
+        contract.open_case(
+            "case-2",
+            product_type,
+            recall_number,
+            refresh_subject,
+            current_contract_address(direct_vm),
+            "case-1",
+        )
+
+
+def test_valid_refresh_preserves_predecessor_and_records_lineage(
+    direct_vm, direct_deploy, canonical_subject, fda_payload
+):
+    contract = open_pending(direct_vm, direct_deploy, canonical_subject)
+    resolve_affected(direct_vm, contract, fda_payload)
+    predecessor_case = contract.read_case("case-1")
+    predecessor_assessment = contract.read_assessment("case-1")
+    address = current_contract_address(direct_vm)
+
+    contract.open_case("case-2", "food", "F-1000-2026", canonical_subject, address, "case-1")
+
+    assert contract.read_predecessor("case-2") == (address, "case-1")
+    assert contract.read_case("case-1") == predecessor_case
+    assert contract.read_assessment("case-1") == predecessor_assessment
+    assert contract.read_case("case-2")[0] == "PENDING"
+    assert contract.read_case("case-2")[7] != predecessor_case[7]
+
+
+def test_contract_has_no_privileged_or_upgrade_entrypoints(direct_deploy):
+    contract = direct_deploy(CONTRACT, sdk_version=SDK_VERSION)
+    forbidden = ("upgrade", "admin", "override", "force", "pause", "set_source")
+    instance = object.__getattribute__(contract, "_instance")
+    public_methods = {
+        name for name, value in instance.__class__.__dict__.items() if not name.startswith("_") and callable(value)
+    }
+
+    assert public_methods == {
+        "close_unresolved",
+        "open_case",
+        "read_assessment",
+        "read_case",
+        "read_effective_status",
+        "read_predecessor",
+        "resolve_case",
+    }
+    assert not any(token in name.lower() for name in public_methods for token in forbidden)

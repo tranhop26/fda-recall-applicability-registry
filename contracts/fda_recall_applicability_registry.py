@@ -58,6 +58,16 @@ def _valid_identifier(value: str, max_length: int, punctuation: str) -> bool:
     return all(character.isalnum() or character in punctuation for character in value)
 
 
+def _normalized_address(value: str) -> str:
+    if not isinstance(value, str) or len(value) != 42 or not value.startswith("0x"):
+        raise gl.vm.UserError("Invalid predecessor contract")
+    try:
+        int(value[2:], 16)
+    except Exception:
+        raise gl.vm.UserError("Invalid predecessor contract") from None
+    return value.lower()
+
+
 def _canonical_subject(subject_json: str) -> tuple[str, str]:
     if len(subject_json) == 0 or len(subject_json) > 4096:
         raise gl.vm.UserError("Invalid subject length")
@@ -280,6 +290,27 @@ class FdaRecallApplicabilityRegistry(gl.Contract):
         if not _valid_identifier(recall_number, 64, "-"):
             raise gl.vm.UserError("Invalid recall number")
         canonical_subject, subject_hash = _canonical_subject(subject_json)
+        has_predecessor_contract = predecessor_contract != ""
+        has_predecessor_case = predecessor_case_id != ""
+        if has_predecessor_contract != has_predecessor_case:
+            raise gl.vm.UserError("Invalid predecessor")
+        if has_predecessor_contract:
+            normalized_predecessor = _normalized_address(predecessor_contract)
+            current_contract = _normalized_address(str(gl.message.contract_address))
+            if normalized_predecessor != current_contract:
+                raise gl.vm.UserError("Predecessor must be local")
+            if not _valid_identifier(predecessor_case_id, 64, "-_.:") or predecessor_case_id not in self.cases:
+                raise gl.vm.UserError("Unknown predecessor")
+            predecessor = self._case(predecessor_case_id)
+            if predecessor["state"] == "PENDING":
+                raise gl.vm.UserError("Predecessor is not terminal")
+            if (
+                predecessor["product_type"] != product_type
+                or predecessor["recall_number"] != recall_number
+                or predecessor["subject_hash"] != subject_hash
+            ):
+                raise gl.vm.UserError("Predecessor identity mismatch")
+            predecessor_contract = normalized_predecessor
         created_at = int(datetime.now(timezone.utc).timestamp())
         registrar = str(gl.message.sender_address)
         replay_domain = _sha256(
@@ -416,6 +447,11 @@ class FdaRecallApplicabilityRegistry(gl.Contract):
         if now > assessment["valid_until"]:
             return "UNRESOLVED", "STALE", assessment["valid_until"]
         return assessment["verdict"], "CURRENT", assessment["valid_until"]
+
+    @gl.public.view
+    def read_predecessor(self, case_id: str) -> tuple[str, str]:
+        case = self._case(case_id)
+        return case["predecessor_contract"], case["predecessor_case_id"]
 
     def _case(self, case_id: str):
         if case_id not in self.cases:
