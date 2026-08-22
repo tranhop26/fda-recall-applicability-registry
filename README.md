@@ -113,7 +113,16 @@ The runner requires Studionet chain ID `61999`, exact wallet match, `FINALIZED` 
 
 ## Current deployment status
 
-Not deployed yet. No contract address or transaction is claimed until the confirmation gate and live verification complete.
+Verified on GenLayer Studionet (chain ID `61999`) using the confirmed wallet `0x21b45103dd05c43969daF3CbB4277391777e2eC7` in Normal (Full Consensus) mode.
+
+- Contract: [`0xbF3eeaa946a9576e738B6C844a7Eb317f8885f4e`](https://explorer-studio.genlayer.com/address/0xbF3eeaa946a9576e738B6C844a7Eb317f8885f4e)
+- Deploy: [`0xe1929472d0c1e7623ff3ece5bc8543a798eade4a87ac355abe7e160aff80d018`](https://explorer-studio.genlayer.com/tx/0xe1929472d0c1e7623ff3ece5bc8543a798eade4a87ac355abe7e160aff80d018)
+- Sample `open_case`: [`0x1f22e8b22a25343c9ca550983bfd0ed6b4ddab05921e82f903304baf5bb7b721`](https://explorer-studio.genlayer.com/tx/0x1f22e8b22a25343c9ca550983bfd0ed6b4ddab05921e82f903304baf5bb7b721)
+- Sample `resolve_case`: [`0xf564b66e1f325cebedb31b2548eaf20e7751326dfc0951a8fba206b91cc641b9`](https://explorer-studio.genlayer.com/tx/0xf564b66e1f325cebedb31b2548eaf20e7751326dfc0951a8fba206b91cc641b9)
+- Final readback: case `DECIDED`; assessment `AFFECTED`; masks `31/0/0`; source date `2026-08-12`; effective status `CURRENT` through Unix time `1788238693`.
+- Source verification: deployed and local canonical SHA-256 are both `49e58dc644bbebabe22f4995da466309bedb32e4c34788b33d1de5a908e21cfe`.
+
+The machine-readable receipts, full readback, explorer URLs, and verified seven-method schema are in `deployments/studionet.json`.
 
 ## Frozen classification and recovery
 

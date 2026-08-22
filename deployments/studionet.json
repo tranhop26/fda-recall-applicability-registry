@@ -1,0 +1,66 @@
+{
+  "network": "studionet",
+  "chain_id": 61999,
+  "rpc_url": "https://studio.genlayer.com/api",
+  "deployer": "0x21b45103dd05c43969daF3CbB4277391777e2eC7",
+  "contract_address": "0xbF3eeaa946a9576e738B6C844a7Eb317f8885f4e",
+  "case_id": "fda-h-1223-2026-20260822",
+  "recall_number": "H-1223-2026",
+  "source_sha256": "49e58dc644bbebabe22f4995da466309bedb32e4c34788b33d1de5a908e21cfe",
+  "deployed_source_sha256": "49e58dc644bbebabe22f4995da466309bedb32e4c34788b33d1de5a908e21cfe",
+  "transactions": {
+    "deploy": "0xe1929472d0c1e7623ff3ece5bc8543a798eade4a87ac355abe7e160aff80d018",
+    "open_case": "0x1f22e8b22a25343c9ca550983bfd0ed6b4ddab05921e82f903304baf5bb7b721",
+    "resolve_case": "0xf564b66e1f325cebedb31b2548eaf20e7751326dfc0951a8fba206b91cc641b9"
+  },
+  "receipts": {
+    "deploy": {"status": "FINALIZED", "execution_result": "SUCCESS"},
+    "open_case": {"status": "FINALIZED", "execution_result": "SUCCESS"},
+    "resolve_case": {"status": "FINALIZED", "execution_result": "SUCCESS"}
+  },
+  "readback": {
+    "case": [
+      "DECIDED",
+      "food",
+      "H-1223-2026",
+      "1f686806ff499550ae458fff056851554f3ac021ec29c4895c055b0f84584b17",
+      "0x21b45103dd05c43969daF3CbB4277391777e2eC7",
+      1787374556,
+      1787547356,
+      "65ea452dd90dce6cbfea2b0cdabfd375402f27b4b5bc79d5e100e10df33dcf4d"
+    ],
+    "assessment": [
+      "AFFECTED",
+      31,
+      0,
+      0,
+      "dde9bfb18573c07f0f8017f4f119074cdf5f34c578b7b7b04fad7e41989b4a03",
+      "2026-08-12",
+      1787374693,
+      1788238693,
+      "8f63ec5a7e0d5142ffcd7e9f805127b20afef8508714fcc515eec43b9f937f9d"
+    ],
+    "effective_status": ["AFFECTED", "CURRENT", 1788238693]
+  },
+  "verified_public_methods": [
+    "close_unresolved",
+    "open_case",
+    "read_assessment",
+    "read_case",
+    "read_effective_status",
+    "read_predecessor",
+    "resolve_case"
+  ],
+  "explorer": {
+    "contract": "https://explorer-studio.genlayer.com/address/0xbF3eeaa946a9576e738B6C844a7Eb317f8885f4e",
+    "deploy_transaction": "https://explorer-studio.genlayer.com/tx/0xe1929472d0c1e7623ff3ece5bc8543a798eade4a87ac355abe7e160aff80d018",
+    "open_case_transaction": "https://explorer-studio.genlayer.com/tx/0x1f22e8b22a25343c9ca550983bfd0ed6b4ddab05921e82f903304baf5bb7b721",
+    "resolve_case_transaction": "https://explorer-studio.genlayer.com/tx/0xf564b66e1f325cebedb31b2548eaf20e7751326dfc0951a8fba206b91cc641b9"
+  },
+  "tools": {
+    "genlayer_cli": "0.39.2",
+    "deployment_surface": "GenLayer Studio in Chrome",
+    "source_commit": "baa19d82d75fb4e345a921048324b4750320c909"
+  },
+  "generated_at": "2026-08-22T05:01:04.2070310Z"
+}
