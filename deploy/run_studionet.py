@@ -20,6 +20,16 @@ TX_PATTERN = re.compile(r"0x[0-9a-fA-F]{64}")
 ADDRESS_PATTERN = re.compile(r"0x[0-9a-fA-F]{40}")
 ANSI_PATTERN = re.compile(r"\x1b\[[0-9;]*m")
 SECRET_KEY_PARTS = ("private", "mnemonic", "secret", "password", "token", "credential")
+REQUIRED_METHODS = {
+    "close_unresolved",
+    "open_case",
+    "read_assessment",
+    "read_case",
+    "read_effective_status",
+    "read_predecessor",
+    "resolve_case",
+}
+FORBIDDEN_METHOD_PARTS = ("upgrade", "admin", "override", "force", "pause", "set_source")
 
 
 @dataclass(frozen=True)
@@ -102,6 +112,76 @@ def _atomic_json(path: Path, value: dict) -> None:
             temporary_path.unlink()
 
 
+def _validate_readback(request: DeploymentRequest, readback: dict) -> None:
+    case = readback.get("case")
+    assessment = readback.get("assessment")
+    effective = readback.get("effective_status")
+    if not isinstance(case, list | tuple) or len(case) != 8:
+        raise RuntimeError("Invalid case readback")
+    expected_subject_hash = hashlib.sha256(request.subject_json.encode("utf-8")).hexdigest()
+    if (
+        case[0] != "DECIDED"
+        or case[1] != request.product_type
+        or case[2] != request.recall_number
+        or case[3] != expected_subject_hash
+        or not isinstance(case[7], str)
+        or re.fullmatch(r"[0-9a-f]{64}", case[7]) is None
+    ):
+        raise RuntimeError("Authoritative case readback does not match deployment request")
+    if not isinstance(assessment, list | tuple) or len(assessment) != 9:
+        raise RuntimeError("Invalid assessment readback")
+    if assessment[0] not in {"AFFECTED", "NOT_AFFECTED", "UNRESOLVED"}:
+        raise RuntimeError("Invalid verdict readback")
+    masks = assessment[1:4]
+    if (
+        any(not isinstance(mask, int) or isinstance(mask, bool) or mask < 0 or mask & ~31 for mask in masks)
+        or masks[0] & masks[1]
+        or masks[0] & masks[2]
+        or masks[1] & masks[2]
+        or masks[0] | masks[1] | masks[2] != 31
+    ):
+        raise RuntimeError("Invalid semantic-mask readback")
+    if not isinstance(assessment[8], str) or re.fullmatch(r"[0-9a-f]{64}", assessment[8]) is None:
+        raise RuntimeError("Invalid assessment hash readback")
+    if not isinstance(effective, list | tuple) or len(effective) != 3:
+        raise RuntimeError("Invalid effective-status readback")
+    if effective[1] != "CURRENT" or effective[0] != assessment[0] or effective[2] != assessment[7]:
+        raise RuntimeError("Effective readback does not match historical assessment")
+
+
+def _schema_method_names(schema: dict) -> set[str]:
+    methods = schema.get("methods")
+    if isinstance(methods, dict):
+        return set(methods)
+    names: set[str] = set()
+
+    def visit(value) -> None:
+        if isinstance(value, dict):
+            for key, item in value.items():
+                if isinstance(key, str):
+                    names.add(key)
+                visit(item)
+        elif isinstance(value, list):
+            for item in value:
+                visit(item)
+        elif isinstance(value, str):
+            names.add(value)
+
+    visit(schema)
+    return names
+
+
+def _validate_frozen_schema(schema) -> list[str]:
+    if not isinstance(schema, dict):
+        raise RuntimeError("Deployed schema has invalid shape")
+    method_names = _schema_method_names(schema)
+    if not REQUIRED_METHODS.issubset(method_names):
+        raise RuntimeError("Deployed schema is missing required methods")
+    if any(part in name.lower() for name in method_names for part in FORBIDDEN_METHOD_PARTS):
+        raise RuntimeError("Deployed schema contains a forbidden privileged method")
+    return sorted(REQUIRED_METHODS)
+
+
 def run_verified_deployment(
     request: DeploymentRequest,
     *,
@@ -140,16 +220,18 @@ def run_verified_deployment(
     resolve_receipt = cli.receipt(resolve_tx)
     _require_final_success(resolve_receipt)
 
-    readback = _sanitize(
-        {
-            "case": cli.call(contract_address, "read_case", [request.case_id]),
-            "assessment": cli.call(contract_address, "read_assessment", [request.case_id]),
-            "effective_status": cli.call(contract_address, "read_effective_status", [request.case_id]),
-        }
-    )
+    raw_readback = {
+        "case": cli.call(contract_address, "read_case", [request.case_id]),
+        "assessment": cli.call(contract_address, "read_assessment", [request.case_id]),
+        "effective_status": cli.call(contract_address, "read_effective_status", [request.case_id]),
+    }
+    _validate_readback(request, raw_readback)
+    readback = _sanitize(raw_readback)
     deployed_hash = source_sha256(cli.code(contract_address))
     if deployed_hash != local_hash:
         raise RuntimeError("Deployed source hash does not match local source hash")
+    schema = cli.schema(contract_address)
+    verified_methods = _validate_frozen_schema(schema)
 
     manifest = {
         "network": "studionet",
@@ -172,6 +254,7 @@ def run_verified_deployment(
             "resolve_case": {"status": "FINALIZED", "execution_result": "SUCCESS"},
         },
         "readback": readback,
+        "verified_public_methods": verified_methods,
         "explorer": {
             "contract": f"{EXPLORER_BASE}/address/{contract_address}",
             "deploy_transaction": f"{EXPLORER_BASE}/tx/{deploy_tx}",
@@ -208,8 +291,13 @@ class GenLayerCli:
     @staticmethod
     def _result_object(output: str) -> dict | list:
         marker = output.find("Result:")
-        start = output.find("{", marker if marker >= 0 else 0)
-        end = output.rfind("}")
+        search_start = marker if marker >= 0 else 0
+        object_start = output.find("{", search_start)
+        array_start = output.find("[", search_start)
+        starts = [position for position in (object_start, array_start) if position >= 0]
+        start = min(starts) if starts else -1
+        closing = "}" if start >= 0 and output[start] == "{" else "]"
+        end = output.rfind(closing)
         if start < 0 or end < start:
             raise RuntimeError("GenLayer CLI returned no structured result")
         block = output[start : end + 1]
@@ -268,6 +356,12 @@ class GenLayerCli:
         source = output[marker + len("Result:") :]
         source = re.split(r"\n[\u221a]\s", source, maxsplit=1)[0]
         return source.strip("\r\n") + "\n"
+
+    def schema(self, contract_address: str) -> dict:
+        value = self._result_object(self._run("schema", contract_address))
+        if not isinstance(value, dict):
+            raise RuntimeError("Schema has invalid shape")
+        return value
 
 
 def main() -> int:

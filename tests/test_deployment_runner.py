@@ -4,7 +4,7 @@ from dataclasses import replace
 
 import pytest
 
-from deploy.run_studionet import DeploymentRequest, run_verified_deployment
+from deploy.run_studionet import DeploymentRequest, GenLayerCli, run_verified_deployment
 
 SOURCE = "# contract source\n"
 WALLET = "0x" + "12" * 20
@@ -31,10 +31,25 @@ class FakeCli:
             TX_HASHES[2]: finalized_receipt(TX_HASHES[2]),
         }
         self.deployed_code = SOURCE
+        subject_hash = hashlib.sha256(canonical_subject_json().encode()).hexdigest()
         self.readbacks = {
-            "read_case": ["DECIDED"],
-            "read_assessment": ["AFFECTED", 31, 0, 0],
-            "read_effective_status": ["AFFECTED", "CURRENT", 123],
+            "read_case": ["DECIDED", "food", "H-1223-2026", subject_hash, WALLET, 100, 200, "ab" * 32],
+            "read_assessment": ["AFFECTED", 31, 0, 0, "cd" * 32, "2026-08-12", 110, 300, "ef" * 32],
+            "read_effective_status": ["AFFECTED", "CURRENT", 300],
+        }
+        self.deployed_schema = {
+            "methods": {
+                name: {}
+                for name in (
+                    "close_unresolved",
+                    "open_case",
+                    "read_assessment",
+                    "read_case",
+                    "read_effective_status",
+                    "read_predecessor",
+                    "resolve_case",
+                )
+            }
         }
         self.write_index = 1
 
@@ -64,6 +79,25 @@ class FakeCli:
     def code(self, contract_address):
         return self.deployed_code
 
+    def schema(self, contract_address):
+        return self.deployed_schema
+
+
+def canonical_subject_json():
+    return json.dumps(
+        {
+            "date_type": "best_by",
+            "date_value": "2027-01-19",
+            "lot_or_code": "260119",
+            "manufacturer": "PT Organics Limited",
+            "model_or_sku": "PTO Item 10720",
+            "product_name": "Peter Rabbit fruit puree",
+            "territory": "Virginia",
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+
 
 @pytest.fixture
 def contract_source(tmp_path):
@@ -80,7 +114,7 @@ def deployment_request(contract_source):
         case_id="sample-case",
         product_type="food",
         recall_number="H-1223-2026",
-        subject_json='{"subject":"bounded"}',
+        subject_json=canonical_subject_json(),
     )
 
 
@@ -161,11 +195,37 @@ def test_success_writes_hash_bound_manifest_atomically(tmp_path, deployment_requ
 def test_manifest_and_error_text_do_not_contain_secret_fields(tmp_path, deployment_request):
     cli = FakeCli()
     secret = "do-not-leak-private-key"
-    request = replace(deployment_request, subject_json='{"note":"safe"}')
-    cli.readbacks["read_case"] = ["DECIDED", {"private_key": secret}]
+    request = replace(deployment_request, subject_json=canonical_subject_json())
+    cli.deployed_schema["private_key"] = secret
 
     manifest = run_verified_deployment(request, cli=cli, output_dir=tmp_path)
 
     serialized = json.dumps(manifest)
     assert secret not in serialized
     assert "private_key" not in serialized.lower()
+
+
+def test_cli_result_parser_accepts_tuple_like_array_output():
+    output = "Result:\n[ 'DECIDED', 'food', 42 ]\n\n√ Contract call successful\n"
+
+    assert GenLayerCli._result_object(output) == ["DECIDED", "food", 42]
+
+
+def test_manifest_rejects_incomplete_authoritative_readback(tmp_path, deployment_request):
+    cli = FakeCli()
+    cli.readbacks["read_case"] = ["DECIDED"]
+
+    with pytest.raises(RuntimeError, match="readback"):
+        run_verified_deployment(deployment_request, cli=cli, output_dir=tmp_path)
+
+    assert not (tmp_path / "studionet.json").exists()
+
+
+def test_manifest_rejects_privileged_deployed_schema(tmp_path, deployment_request):
+    cli = FakeCli()
+    cli.deployed_schema["methods"]["admin_override"] = {}
+
+    with pytest.raises(RuntimeError, match="schema"):
+        run_verified_deployment(deployment_request, cli=cli, output_dir=tmp_path)
+
+    assert not (tmp_path / "studionet.json").exists()

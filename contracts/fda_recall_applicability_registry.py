@@ -171,11 +171,36 @@ def _stable_fda_record(payload, recall_number: str, assessed_at: int) -> tuple[d
         raise ValueError("recall mismatch")
     stable = {}
     for field in STABLE_FDA_FIELDS:
-        field_value = result.get(field)
+        field_value = result.get(field, "")
         if not isinstance(field_value, str) or len(field_value) > 8000:
             raise ValueError("invalid FDA field")
         stable[field] = field_value
     return stable, source_last_updated
+
+
+def _forced_unavailable_mask(subject, stable_record) -> int:
+    unavailable = 0
+    if subject["manufacturer"] == "" or (
+        stable_record["recalling_firm"] == "" and stable_record["product_description"] == ""
+    ):
+        unavailable |= 1
+    if (subject["product_name"] == "" and subject["model_or_sku"] == "") or stable_record[
+        "product_description"
+    ] == "":
+        unavailable |= 2
+    if (subject["lot_or_code"] == "" and subject["model_or_sku"] == "") or (
+        stable_record["code_info"] == "" and stable_record["product_description"] == ""
+    ):
+        unavailable |= 4
+    if subject["territory"] == "" or stable_record["distribution_pattern"] == "":
+        unavailable |= 8
+    if (
+        subject["date_type"] in ("unknown", "purchase")
+        or subject["date_value"] == ""
+        or stable_record["code_info"] == ""
+    ):
+        unavailable |= 16
+    return unavailable
 
 
 def _semantic_masks(value) -> tuple[int, int, int]:
@@ -238,6 +263,10 @@ def _evaluate(case_json: str, assessed_at: int) -> dict:
         )
         model_result = gl.nondet.exec_prompt(prompt, response_format="json")
         match_mask, conflict_mask, unavailable_mask = _semantic_masks(model_result)
+        forced_unavailable = _forced_unavailable_mask(json.loads(case["subject"]), stable_record)
+        match_mask &= ~forced_unavailable
+        conflict_mask &= ~forced_unavailable
+        unavailable_mask |= forced_unavailable
         evaluation = {
             "match_mask": match_mask,
             "conflict_mask": conflict_mask,

@@ -48,6 +48,59 @@ def test_source_date_at_ten_calendar_day_boundary_is_fresh(direct_vm, direct_dep
     assert contract.read_assessment("case-1")[0] == "AFFECTED"
 
 
+def test_optional_fda_field_may_be_absent(direct_vm, direct_deploy, canonical_subject, fda_payload):
+    contract = open_pending(direct_vm, direct_deploy, canonical_subject)
+    del fda_payload["results"][0]["termination_date"]
+
+    resolve_with(direct_vm, contract, fda_payload, semantic_result())
+
+    assert contract.read_assessment("case-1")[0:4] == ("AFFECTED", 31, 0, 0)
+
+
+@pytest.mark.parametrize(
+    ("subject_updates", "forced_bit"),
+    [
+        ({"manufacturer": ""}, 1),
+        ({"model_or_sku": "", "product_name": ""}, 2),
+        ({"lot_or_code": "", "model_or_sku": ""}, 4),
+        ({"territory": ""}, 8),
+        ({"date_type": "unknown", "date_value": ""}, 16),
+    ],
+)
+def test_missing_subject_dimension_cannot_become_explicit_conflict(
+    direct_vm, direct_deploy, subject_data, fda_payload, subject_updates, forced_bit
+):
+    subject_data.update(subject_updates)
+    subject = json.dumps(subject_data, sort_keys=True, separators=(",", ":"))
+    contract = open_pending(direct_vm, direct_deploy, subject)
+    classifications = {
+        "manufacturer": "MATCH",
+        "product_identity": "MATCH",
+        "lot_or_code": "MATCH",
+        "territory": "MATCH",
+        "relevant_date": "MATCH",
+    }
+    dimension = {1: "manufacturer", 2: "product_identity", 4: "lot_or_code", 8: "territory", 16: "relevant_date"}[
+        forced_bit
+    ]
+    classifications[dimension] = "CONFLICT"
+
+    resolve_with(direct_vm, contract, fda_payload, semantic_result(**classifications))
+
+    assert contract.read_assessment("case-1")[0:4] == ("UNRESOLVED", 31 ^ forced_bit, 0, forced_bit)
+
+
+def test_missing_source_dimension_cannot_become_explicit_conflict(
+    direct_vm, direct_deploy, canonical_subject, fda_payload
+):
+    contract = open_pending(direct_vm, direct_deploy, canonical_subject)
+    del fda_payload["results"][0]["distribution_pattern"]
+
+    resolve_with(direct_vm, contract, fda_payload, semantic_result(territory="CONFLICT"))
+
+    assert contract.read_assessment("case-1")[0:4] == ("UNRESOLVED", 23, 0, 8)
+
+
 def test_explicit_dimension_conflict_is_not_affected(direct_vm, direct_deploy, canonical_subject, fda_payload):
     contract = open_pending(direct_vm, direct_deploy, canonical_subject)
 

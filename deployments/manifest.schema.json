@@ -16,6 +16,7 @@
     "transactions",
     "receipts",
     "readback",
+    "verified_public_methods",
     "explorer",
     "tools",
     "generated_at"
@@ -33,6 +34,13 @@
     "transactions": {"type": "object"},
     "receipts": {"type": "object"},
     "readback": {"type": "object"},
+    "verified_public_methods": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "uniqueItems": true,
+      "items": {"type": "string"}
+    },
     "explorer": {"type": "object"},
     "tools": {"type": "object"},
     "generated_at": {"type": "string", "format": "date-time"}
