@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Local quality gate evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["tested_commit", "contract_source_sha256", "generated_at", "commands", "tool_versions"],
+  "properties": {
+    "tested_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "evidence_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "contract_source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "commands": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["command", "exit_code", "completed_at"],
+        "properties": {
+          "command": {"type": "string"},
+          "exit_code": {"const": 0},
+          "completed_at": {"type": "string", "format": "date-time"},
+          "result": {"type": "string"}
+        }
+      }
+    },
+    "tool_versions": {"type": "object", "additionalProperties": {"type": "string"}}
+  }
+}

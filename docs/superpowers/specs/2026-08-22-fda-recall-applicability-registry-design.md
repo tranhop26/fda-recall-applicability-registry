@@ -158,7 +158,7 @@ The LLM must classify every dimension as exactly one of `MATCH`, `CONFLICT`, or 
 
 The LLM interprets natural-language descriptions such as lot ranges, alternative product naming, distribution scope, and date expressions. Mechanical facts—HTTP status, JSON shape, exact recall number, source timestamp, field types, bounds, and hashes—are checked programmatically.
 
-Web text is quoted as untrusted evidence and never treated as instructions. The prompt is fixed by the contract and requests structured JSON with the three masks; free-form reasoning is not authoritative or stored.
+Web text is quoted as untrusted evidence and never treated as instructions. The prompt is fixed by the contract and requests a structured classification for every dimension. Deterministic code converts those classifications into three masks; free-form reasoning is not authoritative or stored.
 
 ### 6.3 Validator behavior
 
@@ -234,8 +234,10 @@ Recovery procedure:
 2. publish and test a corrected contract version;
 3. obtain explicit deployment-wallet confirmation;
 4. deploy and verify the new source hash;
-5. create refresh cases on the new contract with predecessor references containing the old contract address and case ID;
+5. publish an evidence mapping from old contract/case IDs to replacement contract/case IDs; and
 6. have downstream integrations explicitly switch to the verified new address.
+
+On-chain predecessor links are deliberately local to one deployment because this contract cannot authenticate arbitrary external contract storage. Cross-deployment migration provenance is therefore explicit deployment evidence, not caller-asserted calldata.
 
 Historical decisions remain readable and cannot be rewritten. There is no privileged rescue path because the contract holds no funds.
 
