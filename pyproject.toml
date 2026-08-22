@@ -1,0 +1,16 @@
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+"contracts/*.py" = ["F403", "F405", "I001", "UP017"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+  "integration: network integration tests",
+  "studionet: live GenLayer Studionet tests",
+]
