@@ -128,6 +128,18 @@ class FdaRecallApplicabilityRegistry(gl.Contract):
             }
         )
 
+    @gl.public.write
+    def close_unresolved(self, case_id: str):
+        case = self._case(case_id)
+        if case["state"] != "PENDING":
+            raise gl.vm.UserError("Case is terminal")
+        now = int(datetime.now(timezone.utc).timestamp())
+        if now < case["resolution_deadline"]:
+            raise gl.vm.UserError("Resolution deadline not reached")
+        case["state"] = "CLOSED_UNRESOLVED"
+        case["closed_at"] = now
+        self._store_case(case_id, case)
+
     @gl.public.view
     def read_case(self, case_id: str) -> tuple[str, str, str, str, str, u64, u64, str]:
         case = self._case(case_id)
@@ -142,7 +154,44 @@ class FdaRecallApplicabilityRegistry(gl.Contract):
             case["replay_domain"],
         )
 
+    @gl.public.view
+    def read_assessment(self, case_id: str) -> tuple[str, u32, u32, u32, str, str, u64, u64, str]:
+        self._case(case_id)
+        assessment = self._assessment(case_id)
+        return (
+            assessment["verdict"],
+            assessment["match_mask"],
+            assessment["conflict_mask"],
+            assessment["unavailable_mask"],
+            assessment["source_hash"],
+            assessment["source_last_updated"],
+            assessment["assessed_at"],
+            assessment["valid_until"],
+            assessment["assessment_hash"],
+        )
+
+    @gl.public.view
+    def read_effective_status(self, case_id: str) -> tuple[str, str, u64]:
+        case = self._case(case_id)
+        if case["state"] == "PENDING":
+            return "UNRESOLVED", "PENDING", 0
+        if case["state"] == "CLOSED_UNRESOLVED":
+            return "UNRESOLVED", "CLOSED", 0
+        assessment = self._assessment(case_id)
+        now = int(datetime.now(timezone.utc).timestamp())
+        if now > assessment["valid_until"]:
+            return "UNRESOLVED", "STALE", assessment["valid_until"]
+        return assessment["verdict"], "CURRENT", assessment["valid_until"]
+
     def _case(self, case_id: str):
         if case_id not in self.cases:
             raise gl.vm.UserError("Unknown case")
         return json.loads(self.cases[case_id])
+
+    def _assessment(self, case_id: str):
+        if case_id not in self.assessments:
+            raise gl.vm.UserError("Assessment unavailable")
+        return json.loads(self.assessments[case_id])
+
+    def _store_case(self, case_id: str, case) -> None:
+        self.cases[case_id] = _canonical_json(case)

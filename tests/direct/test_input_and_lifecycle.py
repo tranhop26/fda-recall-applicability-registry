@@ -9,6 +9,13 @@ def canonical(value):
     return json.dumps(value, sort_keys=True, separators=(",", ":"))
 
 
+def open_pending(direct_vm, direct_deploy, canonical_subject):
+    direct_vm.warp("2026-08-22T00:00:00+00:00")
+    contract = direct_deploy(CONTRACT, sdk_version=SDK_VERSION)
+    contract.open_case("case-1", "food", "F-1000-2026", canonical_subject, "", "")
+    return contract
+
+
 def test_open_case_stores_canonical_subject(direct_deploy, canonical_subject):
     contract = direct_deploy(CONTRACT, sdk_version=SDK_VERSION)
 
@@ -116,3 +123,54 @@ def test_known_date_requires_value(direct_deploy, subject_data):
 
     with pytest.raises(Exception, match="Known date requires value"):
         contract.open_case("case-1", "food", "F-1000-2026", canonical(subject_data), "", "")
+
+
+def test_pending_effective_status_is_unresolved(direct_vm, direct_deploy, canonical_subject):
+    contract = open_pending(direct_vm, direct_deploy, canonical_subject)
+
+    assert contract.read_effective_status("case-1") == ("UNRESOLVED", "PENDING", 0)
+
+
+def test_unrelated_address_closes_after_deadline(direct_vm, direct_deploy, direct_bob, canonical_subject):
+    contract = open_pending(direct_vm, direct_deploy, canonical_subject)
+    direct_vm.warp("2026-08-24T00:00:00+00:00")
+
+    with direct_vm.prank(direct_bob):
+        contract.close_unresolved("case-1")
+
+    assert contract.read_case("case-1")[0] == "CLOSED_UNRESOLVED"
+    assert contract.read_effective_status("case-1") == ("UNRESOLVED", "CLOSED", 0)
+
+
+def test_close_before_deadline_is_rejected_without_mutation(direct_vm, direct_deploy, canonical_subject):
+    contract = open_pending(direct_vm, direct_deploy, canonical_subject)
+    direct_vm.warp("2026-08-23T23:59:59+00:00")
+
+    with pytest.raises(Exception, match="Resolution deadline not reached"):
+        contract.close_unresolved("case-1")
+
+    assert contract.read_case("case-1")[0] == "PENDING"
+
+
+def test_closed_case_cannot_be_closed_twice(direct_vm, direct_deploy, canonical_subject):
+    contract = open_pending(direct_vm, direct_deploy, canonical_subject)
+    direct_vm.warp("2026-08-24T00:00:00+00:00")
+    contract.close_unresolved("case-1")
+
+    with pytest.raises(Exception, match="Case is terminal"):
+        contract.close_unresolved("case-1")
+
+
+def test_assessment_read_is_unavailable_before_decision(direct_vm, direct_deploy, canonical_subject):
+    contract = open_pending(direct_vm, direct_deploy, canonical_subject)
+
+    with pytest.raises(Exception, match="Assessment unavailable"):
+        contract.read_assessment("case-1")
+
+
+@pytest.mark.parametrize("method_name", ["read_case", "read_effective_status", "read_assessment"])
+def test_unknown_case_reads_are_rejected(direct_deploy, method_name):
+    contract = direct_deploy(CONTRACT, sdk_version=SDK_VERSION)
+
+    with pytest.raises(Exception, match="Unknown case"):
+        getattr(contract, method_name)("missing")
