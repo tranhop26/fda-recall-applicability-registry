@@ -4,43 +4,43 @@
       "command": "python -m pip check",
       "completed_at": "2026-08-22T05:39:07.0411821Z",
       "exit_code": 0,
-      "result": "No broken requirements found"
+      "result": "GitHub Actions run 32554881122, job 96987366483, head 895ac8d7c16459b1c0376e1cd0f9d05a01633af4: No broken requirements found"
     },
     {
       "command": "genvm-lint check contracts/fda_recall_applicability_registry.py",
       "completed_at": "2026-08-22T05:40:05.6609038Z",
       "exit_code": 0,
-      "result": "Lint passed; validation passed; 7 methods (4 view, 3 write)"
+      "result": "GitHub Actions run 32554881122, job 96987366483, head 895ac8d7c16459b1c0376e1cd0f9d05a01633af4: Lint passed; validation passed; 7 methods (4 view, 3 write)"
     },
     {
       "command": "python -m ruff format --check .",
       "completed_at": "2026-08-22T05:40:05.7386797Z",
       "exit_code": 0,
-      "result": "9 files already formatted"
+      "result": "GitHub Actions run 32554881122, job 96987366483, head 895ac8d7c16459b1c0376e1cd0f9d05a01633af4: 9 files already formatted"
     },
     {
       "command": "python -m ruff check .",
       "completed_at": "2026-08-22T05:40:05.7804938Z",
       "exit_code": 0,
-      "result": "All checks passed"
+      "result": "GitHub Actions run 32554881122, job 96987366483, head 895ac8d7c16459b1c0376e1cd0f9d05a01633af4: All checks passed"
     },
     {
       "command": "PYTHONUTF8=1 python3 -m pytest -m 'not integration and not studionet' -q (WSL)",
       "completed_at": "2026-08-22T05:41:01.9780536Z",
       "exit_code": 0,
-      "result": "77 passed, 1 deselected"
+      "result": "GitHub Actions run 32554881122, job 96987366483, head 895ac8d7c16459b1c0376e1cd0f9d05a01633af4: 77 passed, 1 deselected"
     },
     {
       "command": "python -m pytest tests/integration --collect-only -q",
       "completed_at": "2026-08-22T05:41:03.4250406Z",
       "exit_code": 0,
-      "result": "1 test collected"
+      "result": "GitHub Actions run 32554881122, job 96987366483, head 895ac8d7c16459b1c0376e1cd0f9d05a01633af4: 1 test collected"
     },
     {
       "command": "git diff --check",
       "completed_at": "2026-08-30T12:55:50.0709289Z",
       "exit_code": 0,
-      "result": "No whitespace errors"
+      "result": "Local audit-only check at generated_at 2026-08-30T12:55:50.0709289Z (not CI/commit-bound test evidence): No whitespace errors"
     }
   ],
   "contract_source_sha256": "49e58dc644bbebabe22f4995da466309bedb32e4c34788b33d1de5a908e21cfe",
