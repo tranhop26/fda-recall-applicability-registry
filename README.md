@@ -124,6 +124,10 @@ Verified on GenLayer Studionet (chain ID `61999`) using the confirmed wallet `0x
 
 The machine-readable receipts, full readback, explorer URLs, and verified seven-method schema are in `deployments/studionet.json`.
 
+## Evidence boundaries
+
+The live evidence supports the `AFFECTED` assessment and `DECIDED` case state shown above. Replay rejection, `CLOSED_UNRESOLVED`, `NOT_AFFECTED`, and insufficient-evidence outcomes are test-only unless Task 3 records a corresponding live receipt. No live `NOT_AFFECTED` claim is made using stale FDA metadata.
+
 ## Frozen classification and recovery
 
 The contract is `INTENTIONALLY_FROZEN`: there is no upgrader, owner, admin override, force resolve, pause, or arbitrary-source setter. Same-deployment refreshes may link only to an existing terminal local case with identical product type, recall number, and subject hash.

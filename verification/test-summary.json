@@ -16,7 +16,7 @@
       "command": "python -m ruff format --check .",
       "completed_at": "2026-08-22T04:14:01.3143060Z",
       "exit_code": 0,
-      "result": "8 files already formatted"
+      "result": "9 files already formatted"
     },
     {
       "command": "python -m ruff check .",
@@ -28,7 +28,7 @@
       "command": "PYTHONUTF8=1 python3 -m pytest -m 'not integration and not studionet' -q (WSL)",
       "completed_at": "2026-08-22T04:14:01.3143060Z",
       "exit_code": 0,
-      "result": "76 passed, 1 deselected"
+      "result": "77 passed, 1 deselected"
     },
     {
       "command": "python -m pytest tests/integration --collect-only -q",
@@ -44,9 +44,9 @@
     }
   ],
   "contract_source_sha256": "49e58dc644bbebabe22f4995da466309bedb32e4c34788b33d1de5a908e21cfe",
-  "evidence_commit": "39a490ffdbac12a4788658807294e374931d7973",
-  "generated_at": "2026-08-22T04:14:01.3143060Z",
-  "tested_commit": "8615c17ad0c7a04be17fdebb70b95a2258820e53",
+  "evidence_commit": "895ac8d7c16459b1c0376e1cd0f9d05a01633af4",
+  "generated_at": "2026-08-30T12:55:50.0709289Z",
+  "tested_commit": "895ac8d7c16459b1c0376e1cd0f9d05a01633af4",
   "tool_versions": {
     "genlayer_cli": "0.39.2",
     "genvm_lint": "0.11.0",
