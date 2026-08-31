@@ -38,6 +38,26 @@
     "supplemental_evidence": {
       "type": "array",
       "minItems": 2,
+      "allOf": [
+        {
+          "contains": {
+            "type": "object",
+            "required": ["label"],
+            "properties": {"label": {"const": "live_replay_rejection"}}
+          },
+          "minContains": 1,
+          "maxContains": 1
+        },
+        {
+          "contains": {
+            "type": "object",
+            "required": ["label"],
+            "properties": {"label": {"const": "live_stale_source_fail_closed"}}
+          },
+          "minContains": 1,
+          "maxContains": 1
+        }
+      ],
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -150,7 +170,14 @@
             "then": {
               "properties": {
                 "transactions": {"required": ["replay_resolve_case"]},
-                "receipts": {"required": ["replay_resolve_case"]},
+                "receipts": {
+                  "required": ["replay_resolve_case"],
+                  "properties": {
+                    "replay_resolve_case": {
+                      "properties": {"execution_result": {"const": "ERROR"}}
+                    }
+                  }
+                },
                 "readback": {"required": ["replay_unchanged_case"]},
                 "explorer": {"required": ["replay_resolve_case_transaction"]}
               }
@@ -162,7 +189,17 @@
               "required": ["subject", "source_observation"],
               "properties": {
                 "transactions": {"required": ["open_case", "resolve_case"]},
-                "receipts": {"required": ["open_case", "resolve_case"]},
+                "receipts": {
+                  "required": ["open_case", "resolve_case"],
+                  "properties": {
+                    "open_case": {
+                      "properties": {"execution_result": {"const": "SUCCESS"}}
+                    },
+                    "resolve_case": {
+                      "properties": {"execution_result": {"const": "SUCCESS"}}
+                    }
+                  }
+                },
                 "readback": {"required": ["pending_case", "final_case", "final_assessment", "final_effective_status"]},
                 "explorer": {"required": ["open_case_transaction", "resolve_case_transaction"]}
               }

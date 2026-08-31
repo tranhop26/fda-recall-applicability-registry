@@ -128,7 +128,7 @@ The machine-readable receipts, full readback, explorer URLs, and verified seven-
 
 ## Evidence boundaries
 
-The live evidence supports the `AFFECTED` happy path, replay rejection, and a fail-closed `UNRESOLVED` result caused by stale FDA metadata. `CLOSED_UNRESOLVED` and `NOT_AFFECTED` remain test-only. No live `NOT_AFFECTED` claim is made using stale FDA metadata.
+The live evidence supports the `AFFECTED` happy path, replay rejection, and a fail-closed `UNRESOLVED` result. A separate post-finalization FDA observation found stale metadata and corroborates the safety scenario, but it does not uniquely prove which invalid-source branch validators observed. `CLOSED_UNRESOLVED` and `NOT_AFFECTED` remain test-only. No live `NOT_AFFECTED` claim is made using stale FDA metadata.
 
 ## Frozen classification and recovery
 

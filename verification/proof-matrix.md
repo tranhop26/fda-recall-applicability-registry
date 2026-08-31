@@ -2,7 +2,7 @@
 
 Live deployment was executed from the confirmed Chrome wallet in Normal (Full Consensus) mode. Receipt status and execution results were independently read back with GenLayer CLI 0.39.2.
 
-Proof boundary: `AFFECTED`, stale-source `UNRESOLVED`, and replay rejection are live only where a finalized receipt and readback are listed below. `CLOSED_UNRESOLVED` and `NOT_AFFECTED` remain test-only. No live `NOT_AFFECTED` claim is made from stale FDA metadata.
+Proof boundary: `AFFECTED`, fail-closed `UNRESOLVED`, and replay rejection are live only where a finalized receipt and readback are listed below. The stale FDA observation is independent corroboration after finalization, not proof of the validators' exact invalid-source branch. `CLOSED_UNRESOLVED` and `NOT_AFFECTED` remain test-only. No live `NOT_AFFECTED` claim is made from stale FDA metadata.
 
 | Actor | Action | Contract method | Transaction hash | FINALIZED/SUCCESS | Readback | Source/test |
 |---|---|---|---|---|---|---|
