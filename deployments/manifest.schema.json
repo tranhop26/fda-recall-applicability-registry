@@ -34,6 +34,68 @@
     "transactions": {"type": "object"},
     "receipts": {"type": "object"},
     "readback": {"type": "object"},
+    "supplemental_evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "label",
+          "wallet",
+          "case_id",
+          "recall_number",
+          "subject",
+          "source_observation",
+          "captured_at",
+          "transactions",
+          "receipts",
+          "readback",
+          "explorer"
+        ],
+        "properties": {
+          "label": {"type": "string"},
+          "wallet": {"type": "string", "pattern": "^0x[0-9a-fA-F]{40}$"},
+          "case_id": {"type": "string"},
+          "recall_number": {"type": "string"},
+          "subject": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["canonical_json", "sha256"],
+            "properties": {
+              "canonical_json": {"type": "string"},
+              "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+            }
+          },
+          "source_observation": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "url",
+              "product_type",
+              "recall_number",
+              "meta_last_updated",
+              "checked_at",
+              "max_age_seconds",
+              "freshness_result"
+            ],
+            "properties": {
+              "url": {"type": "string", "format": "uri"},
+              "product_type": {"type": "string"},
+              "recall_number": {"type": "string"},
+              "meta_last_updated": {"type": "string", "format": "date"},
+              "checked_at": {"type": "string", "format": "date-time"},
+              "max_age_seconds": {"type": "integer", "minimum": 0},
+              "freshness_result": {"enum": ["FRESH", "STALE", "UNAVAILABLE"]}
+            }
+          },
+          "captured_at": {"type": "string", "format": "date-time"},
+          "transactions": {"type": "object"},
+          "receipts": {"type": "object"},
+          "readback": {"type": "object"},
+          "explorer": {"type": "object"}
+        }
+      }
+    },
     "verified_public_methods": {
       "type": "array",
       "minItems": 7,
