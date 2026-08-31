@@ -16,6 +16,7 @@
     "transactions",
     "receipts",
     "readback",
+    "supplemental_evidence",
     "verified_public_methods",
     "explorer",
     "tools",
@@ -34,6 +35,179 @@
     "transactions": {"type": "object"},
     "receipts": {"type": "object"},
     "readback": {"type": "object"},
+    "supplemental_evidence": {
+      "type": "array",
+      "minItems": 2,
+      "allOf": [
+        {
+          "contains": {
+            "type": "object",
+            "required": ["label"],
+            "properties": {"label": {"const": "live_replay_rejection"}}
+          },
+          "minContains": 1,
+          "maxContains": 1
+        },
+        {
+          "contains": {
+            "type": "object",
+            "required": ["label"],
+            "properties": {"label": {"const": "live_stale_source_fail_closed"}}
+          },
+          "minContains": 1,
+          "maxContains": 1
+        }
+      ],
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "label",
+          "contract_address",
+          "wallet",
+          "case_id",
+          "recall_number",
+          "captured_at",
+          "transactions",
+          "receipts",
+          "readback",
+          "explorer"
+        ],
+        "properties": {
+          "label": {"enum": ["live_replay_rejection", "live_stale_source_fail_closed"]},
+          "contract_address": {"type": "string", "pattern": "^0x[0-9a-fA-F]{40}$"},
+          "wallet": {"type": "string", "pattern": "^0x[0-9a-fA-F]{40}$"},
+          "case_id": {"type": "string", "minLength": 1},
+          "recall_number": {"type": "string", "minLength": 1},
+          "subject": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["canonical_json", "sha256"],
+            "properties": {
+              "canonical_json": {"type": "string"},
+              "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+            }
+          },
+          "source_observation": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "url",
+              "product_type",
+              "recall_number",
+              "meta_last_updated",
+              "observed_at",
+              "max_age_seconds",
+              "freshness_result",
+              "http_status",
+              "response_sha256",
+              "result_count",
+              "object_identifier",
+              "relation_to_transaction"
+            ],
+            "properties": {
+              "url": {"type": "string", "format": "uri"},
+              "product_type": {"type": "string"},
+              "recall_number": {"type": "string"},
+              "meta_last_updated": {"type": "string", "format": "date"},
+              "observed_at": {"type": "string", "format": "date-time"},
+              "max_age_seconds": {"type": "integer", "minimum": 0},
+              "freshness_result": {"enum": ["FRESH", "STALE", "UNAVAILABLE"]},
+              "http_status": {"const": 200},
+              "response_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+              "result_count": {"type": "integer", "minimum": 0},
+              "object_identifier": {"type": "string", "minLength": 1},
+              "relation_to_transaction": {"const": "INDEPENDENT_OBSERVATION_AFTER_FINALIZATION"}
+            }
+          },
+          "captured_at": {"type": "string", "format": "date-time"},
+          "transactions": {
+            "type": "object",
+            "additionalProperties": false,
+            "minProperties": 1,
+            "properties": {
+              "replay_resolve_case": {"type": "string", "pattern": "^0x[0-9a-f]{64}$"},
+              "open_case": {"type": "string", "pattern": "^0x[0-9a-f]{64}$"},
+              "resolve_case": {"type": "string", "pattern": "^0x[0-9a-f]{64}$"}
+            }
+          },
+          "receipts": {
+            "type": "object",
+            "additionalProperties": false,
+            "minProperties": 1,
+            "properties": {
+              "replay_resolve_case": {"$ref": "#/$defs/finalizedReceipt"},
+              "open_case": {"$ref": "#/$defs/finalizedReceipt"},
+              "resolve_case": {"$ref": "#/$defs/finalizedReceipt"}
+            }
+          },
+          "readback": {
+            "type": "object",
+            "additionalProperties": false,
+            "minProperties": 1,
+            "properties": {
+              "replay_unchanged_case": {"type": "array", "minItems": 8},
+              "pending_case": {"type": "array", "minItems": 8},
+              "final_case": {"type": "array", "minItems": 8},
+              "final_assessment": {"type": "array", "minItems": 9},
+              "final_effective_status": {"type": "array", "minItems": 3}
+            }
+          },
+          "explorer": {
+            "type": "object",
+            "additionalProperties": false,
+            "minProperties": 1,
+            "properties": {
+              "replay_resolve_case_transaction": {"type": "string", "format": "uri"},
+              "open_case_transaction": {"type": "string", "format": "uri"},
+              "resolve_case_transaction": {"type": "string", "format": "uri"}
+            }
+          }
+        },
+        "allOf": [
+          {
+            "if": {"properties": {"label": {"const": "live_replay_rejection"}}},
+            "then": {
+              "properties": {
+                "transactions": {"required": ["replay_resolve_case"]},
+                "receipts": {
+                  "required": ["replay_resolve_case"],
+                  "properties": {
+                    "replay_resolve_case": {
+                      "properties": {"execution_result": {"const": "ERROR"}}
+                    }
+                  }
+                },
+                "readback": {"required": ["replay_unchanged_case"]},
+                "explorer": {"required": ["replay_resolve_case_transaction"]}
+              }
+            }
+          },
+          {
+            "if": {"properties": {"label": {"const": "live_stale_source_fail_closed"}}},
+            "then": {
+              "required": ["subject", "source_observation"],
+              "properties": {
+                "transactions": {"required": ["open_case", "resolve_case"]},
+                "receipts": {
+                  "required": ["open_case", "resolve_case"],
+                  "properties": {
+                    "open_case": {
+                      "properties": {"execution_result": {"const": "SUCCESS"}}
+                    },
+                    "resolve_case": {
+                      "properties": {"execution_result": {"const": "SUCCESS"}}
+                    }
+                  }
+                },
+                "readback": {"required": ["pending_case", "final_case", "final_assessment", "final_effective_status"]},
+                "explorer": {"required": ["open_case_transaction", "resolve_case_transaction"]}
+              }
+            }
+          }
+        ]
+      }
+    },
     "verified_public_methods": {
       "type": "array",
       "minItems": 7,
@@ -44,5 +218,18 @@
     "explorer": {"type": "object"},
     "tools": {"type": "object"},
     "generated_at": {"type": "string", "format": "date-time"}
+  },
+  "$defs": {
+    "finalizedReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "execution_result", "consensus_result"],
+      "properties": {
+        "status": {"const": "FINALIZED"},
+        "execution_result": {"enum": ["SUCCESS", "ERROR"]},
+        "consensus_result": {"const": "MAJORITY_AGREE"},
+        "error": {"type": "string"}
+      }
+    }
   }
 }

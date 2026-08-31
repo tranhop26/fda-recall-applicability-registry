@@ -42,6 +42,109 @@
     ],
     "effective_status": ["AFFECTED", "CURRENT", 1788238693]
   },
+  "supplemental_evidence": [
+    {
+      "label": "live_replay_rejection",
+      "contract_address": "0xbF3eeaa946a9576e738B6C844a7Eb317f8885f4e",
+      "wallet": "0x21b45103dd05c43969daF3CbB4277391777e2eC7",
+      "case_id": "fda-h-1223-2026-20260822",
+      "recall_number": "H-1223-2026",
+      "captured_at": "2026-08-30T23:56:41.308790Z",
+      "transactions": {
+        "replay_resolve_case": "0x9182711450b8d130c977d7d98e12e9d8d1b39a57d5e5e6be4d775fdf1aecf331"
+      },
+      "receipts": {
+        "replay_resolve_case": {"status": "FINALIZED", "execution_result": "ERROR", "consensus_result": "MAJORITY_AGREE", "error": "Case is terminal"}
+      },
+      "readback": {
+        "replay_unchanged_case": [
+          "DECIDED",
+          "food",
+          "H-1223-2026",
+          "1f686806ff499550ae458fff056851554f3ac021ec29c4895c055b0f84584b17",
+          "0x21b45103dd05c43969daF3CbB4277391777e2eC7",
+          1787374556,
+          1787547356,
+          "65ea452dd90dce6cbfea2b0cdabfd375402f27b4b5bc79d5e100e10df33dcf4d"
+        ]
+      },
+      "explorer": {
+        "replay_resolve_case_transaction": "https://explorer-studio.genlayer.com/tx/0x9182711450b8d130c977d7d98e12e9d8d1b39a57d5e5e6be4d775fdf1aecf331"
+      }
+    },
+    {
+      "label": "live_stale_source_fail_closed",
+      "contract_address": "0xbF3eeaa946a9576e738B6C844a7Eb317f8885f4e",
+      "wallet": "0x21b45103dd05c43969daF3CbB4277391777e2eC7",
+      "case_id": "fda-h-1230-2026-stale-20260830",
+      "recall_number": "H-1230-2026",
+      "subject": {
+        "canonical_json": "{\"date_type\":\"best_by\",\"date_value\":\"2026-08-17\",\"lot_or_code\":\"P-1950 JD 184\",\"manufacturer\":\"MIDWEST POULTRY SERVC C/O H & LELECTRIC\",\"model_or_sku\":\"UPC 0 11110-60903 8\",\"product_name\":\"Kroger Large 12 Eggs\",\"territory\":\"Texas\"}",
+        "sha256": "6e33240a61581006d3d1e43744fed8c6bf9e9276108af43b327c6a8b5d1fa33b"
+      },
+      "source_observation": {
+        "url": "https://api.fda.gov/food/enforcement.json?search=recall_number:%22H-1230-2026%22&limit=2",
+        "product_type": "food",
+        "recall_number": "H-1230-2026",
+        "meta_last_updated": "2026-08-19",
+        "observed_at": "2026-08-31T00:13:33.997652Z",
+        "max_age_seconds": 864000,
+        "freshness_result": "STALE",
+        "http_status": 200,
+        "response_sha256": "e5dc775b75bbc5007857852755758f20e198361d9878197d56e705c027bcdf2f",
+        "result_count": 1,
+        "object_identifier": "food enforcement recall H-1230-2026",
+        "relation_to_transaction": "INDEPENDENT_OBSERVATION_AFTER_FINALIZATION"
+      },
+      "captured_at": "2026-08-31T00:13:33.997652Z",
+      "transactions": {
+        "open_case": "0x1101fd321a14ba6ffbf77d321424e51fc28fd7bf9ec1b332edfdc172c684b384",
+        "resolve_case": "0xeb81838ce6958c439814aea9d462f8f006e6c371fc4a9d0294c6de5b17404a31"
+      },
+      "receipts": {
+        "open_case": {"status": "FINALIZED", "execution_result": "SUCCESS", "consensus_result": "MAJORITY_AGREE"},
+        "resolve_case": {"status": "FINALIZED", "execution_result": "SUCCESS", "consensus_result": "MAJORITY_AGREE"}
+      },
+      "readback": {
+        "pending_case": [
+          "PENDING",
+          "food",
+          "H-1230-2026",
+          "6e33240a61581006d3d1e43744fed8c6bf9e9276108af43b327c6a8b5d1fa33b",
+          "0x21b45103dd05c43969daF3CbB4277391777e2eC7",
+          1788134317,
+          1788307117,
+          "4557dd66e20f5cdfddcb0585d29006e37861c96021537d4971c63f128ad9f3f9"
+        ],
+        "final_case": [
+          "DECIDED",
+          "food",
+          "H-1230-2026",
+          "6e33240a61581006d3d1e43744fed8c6bf9e9276108af43b327c6a8b5d1fa33b",
+          "0x21b45103dd05c43969daF3CbB4277391777e2eC7",
+          1788134317,
+          1788307117,
+          "4557dd66e20f5cdfddcb0585d29006e37861c96021537d4971c63f128ad9f3f9"
+        ],
+        "final_assessment": [
+          "UNRESOLVED",
+          0,
+          0,
+          31,
+          "",
+          "",
+          1788134423,
+          1788998423,
+          "ba55f8e07bc2fe2d030a60a3dcae7f5a368b2453db5a3d6b30cbd90593870d74"
+        ],
+        "final_effective_status": ["UNRESOLVED", "CURRENT", 1788998423]
+      },
+      "explorer": {
+        "open_case_transaction": "https://explorer-studio.genlayer.com/tx/0x1101fd321a14ba6ffbf77d321424e51fc28fd7bf9ec1b332edfdc172c684b384",
+        "resolve_case_transaction": "https://explorer-studio.genlayer.com/tx/0xeb81838ce6958c439814aea9d462f8f006e6c371fc4a9d0294c6de5b17404a31"
+      }
+    }
+  ],
   "verified_public_methods": [
     "close_unresolved",
     "open_case",

@@ -120,9 +120,15 @@ Verified on GenLayer Studionet (chain ID `61999`) using the confirmed wallet `0x
 - Sample `open_case`: [`0x1f22e8b22a25343c9ca550983bfd0ed6b4ddab05921e82f903304baf5bb7b721`](https://explorer-studio.genlayer.com/tx/0x1f22e8b22a25343c9ca550983bfd0ed6b4ddab05921e82f903304baf5bb7b721)
 - Sample `resolve_case`: [`0xf564b66e1f325cebedb31b2548eaf20e7751326dfc0951a8fba206b91cc641b9`](https://explorer-studio.genlayer.com/tx/0xf564b66e1f325cebedb31b2548eaf20e7751326dfc0951a8fba206b91cc641b9)
 - Final readback: case `DECIDED`; assessment `AFFECTED`; masks `31/0/0`; source date `2026-08-12`; effective status `CURRENT` through Unix time `1788238693`.
+- Replay rejection: [`0x9182711450b8d130c977d7d98e12e9d8d1b39a57d5e5e6be4d775fdf1aecf331`](https://explorer-studio.genlayer.com/tx/0x9182711450b8d130c977d7d98e12e9d8d1b39a57d5e5e6be4d775fdf1aecf331) finalized with execution `ERROR`; the original decided case readback remained unchanged.
+- Fail-closed safety flow: [`open_case` `0x1101fd32…4b384`](https://explorer-studio.genlayer.com/tx/0x1101fd321a14ba6ffbf77d321424e51fc28fd7bf9ec1b332edfdc172c684b384) finalized `SUCCESS` with `PENDING`, then [`resolve_case` `0xeb81838c…404a31`](https://explorer-studio.genlayer.com/tx/0xeb81838ce6958c439814aea9d462f8f006e6c371fc4a9d0294c6de5b17404a31) finalized `SUCCESS` and stored `UNRESOLVED`, masks `0/0/31`, effective `CURRENT` through Unix time `1788998423`. A separate retrieval of the exact FDA endpoint after finalization returned one `H-1230-2026` record with metadata date `2026-08-19`, beyond the 864,000-second limit; its response hash and observation time are recorded in the manifest. Because the response is not embedded in the receipt, this corroborates but does not uniquely prove which invalid-source branch validators observed.
 - Source verification: deployed and local canonical SHA-256 are both `49e58dc644bbebabe22f4995da466309bedb32e4c34788b33d1de5a908e21cfe`.
 
 The machine-readable receipts, full readback, explorer URLs, and verified seven-method schema are in `deployments/studionet.json`.
+
+## Evidence boundaries
+
+The live evidence supports the `AFFECTED` happy path, replay rejection, and a fail-closed `UNRESOLVED` result. A separate post-finalization FDA observation found stale metadata and corroborates the safety scenario, but it does not uniquely prove which invalid-source branch validators observed. `CLOSED_UNRESOLVED` and `NOT_AFFECTED` remain test-only. No live `NOT_AFFECTED` claim is made using stale FDA metadata.
 
 ## Frozen classification and recovery
 
